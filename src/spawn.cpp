@@ -447,6 +447,14 @@ DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle)
   const QString moPath = QCoreApplication::applicationDirPath();
   const auto oldPath   = env::appendToPath(QDir::toNativeSeparators(moPath));
 
+  // Under Wine/CrossOver, ensure essential DLL overrides are present for SKSE / game mods
+  env::WindowsInfo winInfo;
+  if (winInfo.isWine()) {
+    if (env::get("WINEDLLOVERRIDES").isEmpty()) {
+      env::set("WINEDLLOVERRIDES", "dinput8,x3daudio1_7=n,b");
+    }
+  }
+
   PROCESS_INFORMATION pi = {};
   BOOL success           = FALSE;
 
@@ -928,7 +936,10 @@ bool helperExec(QWidget* parent, const std::wstring& moDirectory,
     execInfo.cbSize       = sizeof(SHELLEXECUTEINFOW);
     execInfo.fMask        = flags;
     execInfo.hwnd         = 0;
-    execInfo.lpVerb       = L"runas";
+    
+    // Under Wine/CrossOver, "runas" can cause UAC invocation failures
+    env::WindowsInfo winInfo;
+    execInfo.lpVerb       = winInfo.isWine() ? nullptr : L"runas";
     execInfo.lpFile       = fileName.c_str();
     execInfo.lpParameters = commandLine.c_str();
     execInfo.lpDirectory  = moDirectory.c_str();

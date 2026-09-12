@@ -7,6 +7,7 @@
 #include "organizercore.h"
 #include "shared/util.h"
 #include "thread_utils.h"
+#include <QGuiApplication>
 #include <log.h>
 #include <report.h>
 
@@ -35,6 +36,19 @@ int run(int argc, char* argv[])
   }
 
   initLogging();
+
+  // Wine / CrossOver on macOS specific performance and rendering tweaks
+  HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
+  if (ntdll && GetProcAddress(ntdll, "wine_get_version")) {
+    if (!qEnvironmentVariableIsSet("QT_QUICK_BACKEND")) {
+      qputenv("QT_QUICK_BACKEND", "software");
+    }
+    if (!qEnvironmentVariableIsSet("QT_OPENGL")) {
+      qputenv("QT_OPENGL", "software");
+    }
+    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
+        Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+  }
 
   // must be after logging
   TimeThis tt("main() multiprocess");

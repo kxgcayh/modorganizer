@@ -41,6 +41,10 @@ typedef struct _FILE_DIRECTORY_INFORMATION
 
 #define FILE_SHARE_VALID_FLAGS 0x00000007
 
+#ifndef OBJ_CASE_INSENSITIVE
+#define OBJ_CASE_INSENSITIVE 0x00000040L
+#endif
+
 // copied from ntstatus.h
 #define STATUS_SUCCESS ((NTSTATUS)0x00000000L)
 #define STATUS_BUFFER_OVERFLOW ((NTSTATUS)0x80000005L)
@@ -212,7 +216,7 @@ void forEachEntryImpl(void* cx, HandleCloserThread& hc,
 {
   IO_STATUS_BLOCK iosb;
   UNICODE_STRING ObjectName;
-  OBJECT_ATTRIBUTES oa = {sizeof(oa), 0, &ObjectName};
+  OBJECT_ATTRIBUTES oa = {sizeof(oa), 0, &ObjectName, OBJ_CASE_INSENSITIVE};
   NTSTATUS status;
 
   status = NtOpenFile(&oa.RootDirectory, FILE_GENERIC_READ, poa, &iosb,
@@ -351,6 +355,7 @@ void DirectoryWalker::forEachEntry(const std::wstring& path, void* cx,
   OBJECT_ATTRIBUTES oa = {};
   oa.Length            = sizeof(oa);
   oa.ObjectName        = &ObjectName;
+  oa.Attributes        = OBJ_CASE_INSENSITIVE;
 
   forEachEntryImpl(cx, hc, m_buffers, &oa, 0, dirStartF, dirEndF, fileF);
   hc.wakeup();

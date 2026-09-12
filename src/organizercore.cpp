@@ -6,6 +6,7 @@
 #include "env.h"
 #include "envfs.h"
 #include "envmodule.h"
+#include "envwindows.h"
 #include "filedialogmemory.h"
 #include "guessedvalue.h"
 #include "imodinterface.h"
@@ -1604,8 +1605,10 @@ void OrganizerCore::refreshDirectoryStructure()
   m_DirectoryRefresher->setMods(activeModList,
                                 std::set<QString>(archives.begin(), archives.end()));
 
-  // runs refresh() in a thread
-  QTimer::singleShot(0, m_DirectoryRefresher.get(), &DirectoryRefresher::refresh);
+  // runs refresh() in a thread (with slight debounce under Wine/CrossOver to prevent APFS kqueue thrashing)
+  env::WindowsInfo winInfo;
+  const int delayMs = winInfo.isWine() ? 50 : 0;
+  QTimer::singleShot(delayMs, m_DirectoryRefresher.get(), &DirectoryRefresher::refresh);
 }
 
 void OrganizerCore::onDirectoryRefreshed()

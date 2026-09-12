@@ -66,6 +66,14 @@ public:
   // information is not available
   std::optional<bool> isElevated() const;
 
+  // Wine / CrossOver / macOS host detection
+  bool isWine() const { return m_isWine; }
+  bool isCrossOver() const { return m_isCrossOver; }
+  bool isMacOS() const { return m_isMacOS; }
+  const QString& wineVersion() const { return m_wineVersion; }
+  const QString& hostSystem() const { return m_hostSystem; }
+  const QString& hostRelease() const { return m_hostRelease; }
+
   // returns a string with all the above information on one line
   //
   QString toString() const;
@@ -74,6 +82,16 @@ private:
   Version m_reported, m_real;
   Release m_release;
   std::optional<bool> m_elevated;
+
+  bool m_isWine = false;
+  bool m_isCrossOver = false;
+  bool m_isMacOS = false;
+  QString m_wineVersion;
+  QString m_hostSystem;
+  QString m_hostRelease;
+
+  // detects Wine / CrossOver and host operating system
+  void detectWine(HINSTANCE ntdll);
 
   // uses RtlGetVersion() to get the version number as reported by Windows
   //

@@ -20,10 +20,46 @@ WindowsInfo::WindowsInfo()
   } else {
     m_reported = getReportedVersion(ntdll.get());
     m_real     = getRealVersion(ntdll.get());
+    detectWine(ntdll.get());
   }
 
   m_release  = getRelease();
   m_elevated = getElevated();
+}
+
+void WindowsInfo::detectWine(HINSTANCE ntdll)
+{
+  using WineGetVersionType = const char*(__cdecl*)();
+  using WineGetHostVersionType = void(__cdecl*)(const char**, const char**);
+
+  auto* wine_get_version =
+      reinterpret_cast<WineGetVersionType*>(GetProcAddress(ntdll, "wine_get_version"));
+  auto* wine_get_host_version =
+      reinterpret_cast<WineGetHostVersionType*>(GetProcAddress(ntdll, "wine_get_host_version"));
+
+  if (wine_get_version) {
+    m_isWine = true;
+    m_wineVersion = QString::fromUtf8(wine_get_version());
+
+    if (m_wineVersion.contains("crossover", Qt::CaseInsensitive)) {
+      m_isCrossOver = true;
+    }
+
+    if (wine_get_host_version) {
+      const char* sysname = nullptr;
+      const char* release = nullptr;
+      wine_get_host_version(&sysname, &release);
+      if (sysname) {
+        m_hostSystem = QString::fromUtf8(sysname);
+        if (m_hostSystem.compare("Darwin", Qt::CaseInsensitive) == 0) {
+          m_isMacOS = true;
+        }
+      }
+      if (release) {
+        m_hostRelease = QString::fromUtf8(release);
+      }
+    }
+  }
 }
 
 bool WindowsInfo::compatibilityMode() const
@@ -101,6 +137,20 @@ QString WindowsInfo::toString() const
   }
 
   sl.push_back("elevated: " + elevated);
+
+  // Wine / CrossOver / macOS info
+  if (m_isWine) {
+    QString wineStr = "Wine " + m_wineVersion;
+    if (m_isCrossOver) {
+      wineStr += " (CrossOver)";
+    }
+    if (m_isMacOS) {
+      wineStr += " on macOS (" + m_hostRelease + ")";
+    } else if (!m_hostSystem.isEmpty()) {
+      wineStr += " on " + m_hostSystem;
+    }
+    sl.push_back(wineStr);
+  }
 
   return sl.join(", ");
 }

@@ -17,3 +17,5 @@ edit
 
 /src/version.aps
 .idea/
+.agents/hooks.json
+.cursor/hooks.json

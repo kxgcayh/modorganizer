@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "env.h"
 #include "envmetrics.h"
+#include "envwindows.h"
 #include "executableslist.h"
 #include "instancemanager.h"
 #include "modelutils.h"
@@ -1783,7 +1784,13 @@ void NetworkSettings::updateCustomBrowser()
   if (useCustomBrowser()) {
     MOBase::shell::SetUrlHandler(customBrowserCommand());
   } else {
-    MOBase::shell::SetUrlHandler("");
+    // Under Wine / CrossOver on macOS, default to winebrowser to open native Mac browser
+    env::WindowsInfo winInfo;
+    if (winInfo.isWine()) {
+      MOBase::shell::SetUrlHandler(QString("winebrowser \"%1\""));
+    } else {
+      MOBase::shell::SetUrlHandler("");
+    }
   }
 }
 

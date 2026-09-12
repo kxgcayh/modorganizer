@@ -403,6 +403,17 @@ void checkEnvironment(const env::Environment& e)
 {
   log::debug("running sanity checks...");
 
+  if (e.windows().isWine()) {
+    QString wineMsg = QString("Running under Wine %1").arg(e.windows().wineVersion());
+    if (e.windows().isCrossOver()) {
+      wineMsg += " (CrossOver edition)";
+    }
+    if (e.windows().isMacOS()) {
+      wineMsg += QString(" on macOS Darwin %1").arg(e.windows().hostRelease());
+    }
+    log::info("{}", wineMsg);
+  }
+
   int n = 0;
 
   n += checkBlocked();
