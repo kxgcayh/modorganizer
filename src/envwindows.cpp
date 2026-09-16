@@ -102,6 +102,10 @@ QString WindowsInfo::toString() const
 
   sl.push_back("elevated: " + elevated);
 
+  if (isWine()) {
+    sl.push_back("Wine: " + wineVersion());
+  }
+
   return sl.join(", ");
 }
 

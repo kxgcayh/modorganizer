@@ -136,7 +136,7 @@ std::string DirectoryStats::toCsv() const
 void dumpStats(std::vector<DirectoryStats>& stats)
 {
   static int run = 0;
-  static const std::string file("c:\\tmp\\data.csv");
+  static const std::string file = QDir::temp().filePath("data.csv").toStdString();
 
   if (run == 0) {
     std::ofstream out(file, std::ios::out | std::ios::trunc);
@@ -330,9 +330,9 @@ struct ModThread
   std::wstring path;
   int prio = -1;
   std::vector<std::wstring> archives;
-  std::set<std::wstring> enabledArchives;
-  std::vector<std::wstring>* loadOrder = nullptr;
-  DirectoryStats* stats                = nullptr;
+  const std::set<std::wstring>* enabledArchives = nullptr;
+  std::vector<std::wstring>* loadOrder          = nullptr;
+  DirectoryStats* stats                         = nullptr;
   env::DirectoryWalker walker;
 
   std::condition_variable cv;
@@ -360,8 +360,9 @@ struct ModThread
     ds->addFromOrigin(walker, modName, path, prio, *stats);
 
     if (Settings::instance().archiveParsing()) {
-      ds->addFromAllBSAs(modName, path, prio, archives, enabledArchives, *loadOrder,
-                         *stats);
+      ds->addFromAllBSAs(modName, path, prio, archives,
+                         enabledArchives ? *enabledArchives : std::set<std::wstring>{},
+                         *loadOrder, *stats);
     }
 
     if (progress) {
@@ -395,6 +396,7 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
   g_threads.setMax(m_threadCount);
 
   std::vector<std::wstring> loadOrder;
+  std::set<std::wstring> enabledArchivesW;
   if (Settings::instance().archiveParsing()) {
     auto gamePlugins = m_Core.gameFeatures().gameFeature<GamePlugins>();
     if (gamePlugins) {
@@ -403,6 +405,10 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
       for (auto&& s : lo) {
         loadOrder.push_back(s.toStdWString());
       }
+    }
+
+    for (auto&& a : m_EnabledArchives) {
+      enabledArchivesW.insert(a.toStdWString());
     }
   }
 
@@ -433,17 +439,14 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
         mt.prio         = prio;
 
         mt.archives.clear();
+        mt.archives.reserve(e.archives.size());
         for (auto&& a : e.archives) {
           mt.archives.push_back(a.toStdWString());
         }
 
-        mt.enabledArchives.clear();
-        for (auto&& a : m_EnabledArchives) {
-          mt.enabledArchives.insert(a.toStdWString());
-        }
-
-        mt.loadOrder = &loadOrder;
-        mt.stats     = &stats[i];
+        mt.enabledArchives = &enabledArchivesW;
+        mt.loadOrder       = &loadOrder;
+        mt.stats           = &stats[i];
 
         mt.wakeup();
       }

@@ -109,7 +109,10 @@ InstallationManager::InstallationManager() : m_ParentWidget(nullptr), m_IsRunnin
           &InstallationManager::queryPassword, Qt::BlockingQueuedConnection);
 }
 
-InstallationManager::~InstallationManager() {}
+InstallationManager::~InstallationManager()
+{
+  postInstallCleanup();
+}
 
 void InstallationManager::setParentWidget(QWidget* widget)
 {
@@ -628,6 +631,7 @@ InstallationResult InstallationManager::install(const QString& fileName,
   m_IsRunning = true;
   ON_BLOCK_EXIT([this]() {
     m_IsRunning = false;
+    postInstallCleanup();
   });
 
   QFileInfo fileInfo(fileName);
@@ -751,7 +755,6 @@ InstallationResult InstallationManager::install(const QString& fileName,
                getErrorString(m_ArchiveHandler->getLastError()),
                m_ArchiveHandler->getLastError());
   }
-  ON_BLOCK_EXIT(std::bind(&InstallationManager::postInstallCleanup, this));
 
   std::shared_ptr<IFileTree> filesTree =
       archiveOpen ? ArchiveFileTree::makeTree(*m_ArchiveHandler) : nullptr;

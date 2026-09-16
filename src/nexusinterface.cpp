@@ -1064,6 +1064,16 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
     } else if (statusCode == 429) {
       m_User.limits(parseLimits(reply));
 
+      const QByteArray retryAfterHeader = reply->rawHeader("Retry-After");
+      if (!retryAfterHeader.isEmpty()) {
+        bool ok = false;
+        const int retryAfterSec = retryAfterHeader.toInt(&ok);
+        if (ok && retryAfterSec > 0) {
+          log::warn("Rate limited (HTTP 429). Server requested Retry-After: {} seconds.",
+                    retryAfterSec);
+        }
+      }
+
       if (!m_User.exhausted()) {
         log::warn("You appear to be making requests to the Nexus API too quickly and "
                   "are being throttled. Please inform the MO2 team.");

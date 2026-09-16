@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "moapplication.h"
 #include "commandline.h"
+#include "env.h"
 #include "instancemanager.h"
 #include "loglist.h"
 #include "mainwindow.h"
@@ -162,6 +163,12 @@ MOApplication::MOApplication(int& argc, char** argv) : QApplication(argc, argv)
   // When MO2 is launched by nxmhandler, CWD is set to `C:\Windows\System32`.
   // QtWebEngineProcess crashes if CWD is not set to the application directory.
   QDir::setCurrent(QCoreApplication::applicationDirPath());
+
+  if (env::isWine()) {
+    log::info("Wine/CrossOver detected (version: {})",
+              env::wineVersion().isEmpty() ? "unknown" : env::wineVersion());
+    setAttribute(Qt::AA_DontUseNativeMenuBar, true);
+  }
 }
 
 OrganizerCore& MOApplication::core()

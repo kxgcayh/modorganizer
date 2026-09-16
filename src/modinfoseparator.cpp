@@ -2,7 +2,11 @@
 
 bool ModInfoSeparator::setName(const QString& name)
 {
-  return ModInfoRegular::setName(name);
+  QString targetName = name;
+  if (!isSeparatorName(targetName)) {
+    targetName += "_separator";
+  }
+  return ModInfoRegular::setName(targetName);
 }
 
 std::vector<ModInfo::EFlag> ModInfoSeparator::getFlags() const

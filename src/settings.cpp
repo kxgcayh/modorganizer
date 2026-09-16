@@ -258,7 +258,8 @@ void Settings::setUseSplash(bool b)
 
 std::size_t Settings::refreshThreadCount() const
 {
-  return get<std::size_t>(m_Settings, "Settings", "refresh_thread_count", 10);
+  const std::size_t defaultThreads = env::isWine() ? 4 : 10;
+  return get<std::size_t>(m_Settings, "Settings", "refresh_thread_count", defaultThreads);
 }
 
 void Settings::setRefreshThreadCount(std::size_t n) const

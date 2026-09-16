@@ -288,6 +288,12 @@ void deleteRegistryKeyIfEmpty(const QString& name);
 //
 std::filesystem::path thisProcessPath();
 
+// returns whether this process is running under Wine / CrossOver
+bool isWine();
+
+// returns the Wine version if running under Wine, empty otherwise
+QString wineVersion();
+
 }  // namespace env
 
 #endif  // ENV_ENV_H

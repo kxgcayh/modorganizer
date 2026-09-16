@@ -1269,4 +1269,30 @@ bool coredumpOther(CoreDumpTypes type)
   return createMiniDump(nullptr, handle.get(), type);
 }
 
+bool isWine()
+{
+  static const bool wine = []() {
+    HMODULE ntdll = ::GetModuleHandleW(L"ntdll.dll");
+    return ntdll != nullptr && ::GetProcAddress(ntdll, "wine_get_version") != nullptr;
+  }();
+  return wine;
+}
+
+QString wineVersion()
+{
+  static const QString version = []() {
+    HMODULE ntdll = ::GetModuleHandleW(L"ntdll.dll");
+    if (ntdll != nullptr) {
+      using WineGetVersionType = const char*(__cdecl*)();
+      auto* pwine_get_version =
+          reinterpret_cast<WineGetVersionType>(::GetProcAddress(ntdll, "wine_get_version"));
+      if (pwine_get_version != nullptr) {
+        return QString::fromLatin1(pwine_get_version());
+      }
+    }
+    return QString();
+  }();
+  return version;
+}
+
 }  // namespace env
