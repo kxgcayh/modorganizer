@@ -14,23 +14,20 @@ jobs:
   build:
     runs-on: windows-2022
     steps:
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install Qt 6.11.1
+        uses: jurplel/install-qt-action@v4
         with:
-          python-version: '3.11'
-
-      - name: Pin stable extraction tools
-        shell: pwsh
-        run: |
-          python -m pip install --upgrade pip
-          pip install "py7zr==1.1.0" "aqtinstall"
+          version: '6.11.1'
+          arch: 'win64_msvc2022_64'
+          modules: 'qtpositioning qtwebchannel qtwebengine qtwebsockets qtnetworkauth'
+          py7zrversion: '==1.1.0'
+          dir: 'D:/a/modorganizer'
 
       - name: Build ModOrganizer
         id: build-modorganizer
         uses: ModOrganizer2/build-with-mob-action@master
         with:
-          qt-version: 6.8.2
-          qt-modules: qtpositioning qtwebchannel qtwebengine qtwebsockets qtnetworkauth
+          qt-install: false
           mo2-dependencies: usvfs uibase bsatk esptk archive lootcli
 
       - name: Install ModOrganizer
